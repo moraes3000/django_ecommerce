@@ -66,8 +66,8 @@ class Produto(models.Model):
             self.resize_image(self.imagem, max_image_size)
 
 
-def __str__(self):
-    return self.nome
+    def __str__(self):
+        return self.nome
 
 
 class Variacao(models.Model):
