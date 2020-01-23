@@ -6,7 +6,7 @@ from django.views import View
 from . import models
 from django.contrib import messages
 
-from pprint import pprint #para teste
+from pprint import pprint  # para teste
 
 
 # Create your views here.
@@ -30,7 +30,7 @@ class AddCarrinho(View):
             'HTTP_REFERER',
             reverse('produto:lista')
         )
-        #caso esteja em uma url divergent
+        # caso esteja em uma url divergent
         variacao_id = self.request.GET.get('vid')
 
         if not variacao_id:
@@ -116,8 +116,39 @@ class AddCarrinho(View):
         )
 
         return redirect(http_referer)
+
+
 class RemoverCarrinho(View):
-    pass
+    def get(self, *args, **kwargs):
+        # redireciona na ultima pagina acessada (link externo joga para o site externo)
+        http_referer = self.request.META.get(
+            'HTTP_REFERER',
+            reverse('produto:lista')
+        )
+        # caso esteja em uma url divergent
+        variacao_id = self.request.GET.get('vid')
+
+        if not variacao_id:
+            return redirect(http_referer)
+
+        if not self.request.session.get('carrinho'):
+            return redirect(http_referer)
+
+        if variacao_id not in self.request.session['carrinho']:
+            return redirect(http_referer)
+
+        carrinho = self.request.session['carrinho'][variacao_id]
+
+        messages.success(
+            self.request,
+            f'Produto {carrinho["produto_nome"]} {carrinho["variacao_nome"]}'
+            f'removido do seu carrinho.'
+        )
+
+        del self.request.session['carrinho'][variacao_id]
+        self.request.session.save()
+
+        return redirect(http_referer)
 
 
 class Carrinho(View):

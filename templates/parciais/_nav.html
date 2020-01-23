@@ -35,7 +35,13 @@
                             Carrinho
                         </span>
                         <span class="nav-cart-count mr-1">
-                            <strong>{{ request.session.carrinho|cart_total_qtd }}</strong>
+                            <strong>
+                                {% if  request.session.carrinho  %}x
+                                {{ request.session.carrinho|cart_total_qtd }}
+                                {% else %}
+                                    Carrinho vazio
+                                {% endif %}
+                            </strong>
                         </span>
                         <span class="nav-cart-icon mr-2">
                             <i class="fas fa-shopping-cart"></i>
