@@ -1,6 +1,6 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.views.generic import ListView
+from django.shortcuts import render, redirect, reverse
+from django.views.generic import ListView,DetailView
 from django.contrib import messages
 from django.views import View
 from produto.models import Variacao
@@ -9,7 +9,37 @@ from .models import Pedido , itemPedido
 from utils import utils
 # Create your views here.
 
-class Pagar(View):
+class DispatchLoginRequiredMixin(View):
+    def dispatch(self, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            return redirect('perfil:criar')
+
+        return super().dispatch(*args, **kwargs)
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        qs = qs.filter(usuario=self.request.user)
+        return qs
+
+class Pagar(DetailView):
+  template_name = 'pedido/pagar.html'
+  model = Pedido
+  pk_url_kwarg = 'pk'
+  context_object_name = 'pedido'
+
+  def get_queryset(self,*args, **kwargs):
+      qs = super().get_queryset(*args, **kwargs)
+      qs = qs.filter(usuario=self.request.user)
+      return qs
+
+
+
+
+class Lista(View):
+    def get(self, *args, **kwargs):
+        return HttpResponse('Pedito')
+
+class SalvarPedido(View):
     template_name = 'pedido/pagar.html'
 
     def get(self, *args, **kwargs):
@@ -31,7 +61,7 @@ class Pagar(View):
         carrinho_variacao_ids = [v for v in carrinho]
         bd_variacoes = list(
             Variacao.objects.select_related('produto')
-            .filter(id__in=carrinho_variacao_ids)
+                .filter(id__in=carrinho_variacao_ids)
         )
 
         for variacao in bd_variacoes:
@@ -48,10 +78,10 @@ class Pagar(View):
                 carrinho[vid]['quantidade'] = estoque
                 carrinho[vid]['preco_quantitativo'] = estoque * preco_unt
                 carrinho[vid]['preco_quantitativo_promocional'] = estoque * \
-                    preco_unt_promo
+                                                                  preco_unt_promo
 
-                error_msg_estoque = 'Estoque insuficiente para alguns produtos do seu carrinho. '\
-                                    'Reduzimos a quantidade desses produtos. Por favor, '\
+                error_msg_estoque = 'Estoque insuficiente para alguns produtos do seu carrinho. ' \
+                                    'Reduzimos a quantidade desses produtos. Por favor, ' \
                                     'verifique quais produtos foram afetados a seguir.'
 
             if error_msg_estoque:
@@ -62,7 +92,6 @@ class Pagar(View):
 
                 self.request.session.save()
                 return redirect('produto:carrinho')
-
 
         qtd_total_carrinho = utils.cart_total_qtd(carrinho)
         valor_total_carrinho = utils.cart_totals(carrinho)
@@ -92,24 +121,21 @@ class Pagar(View):
         )
 
         contexto = {
-            'qtd_total_carrinho':qtd_total_carrinho,
+            'qtd_total_carrinho': qtd_total_carrinho,
             'valor_total_carrinho': valor_total_carrinho
         }
 
         del self.request.session['carrinho']
 
-        return redirect('pedido:Lista')
+        return redirect(
+            reverse(
+                'pedido:pagar',
+                kwargs={
+                    'pk':pedido.pk
+                }
+            )
+        )
 
-
-
-
-class Lista(View):
-    def get(self, *args, **kwargs):
-        return HttpResponse('Pedito')
-
-class FecharPedido(View):
-    def get(self, *args, **kwargs):
-        return HttpResponse('FecharPedido')
 
 class Detalhe(View):
     def get(self, *args, **kwargs):

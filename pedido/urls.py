@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import Pagar, FecharPedido, Detalhe, Lista
+from .views import Pagar, SalvarPedido, Detalhe, Lista
 
 app_name = 'pedido'
 
 urlpatterns = [
-    path('', Pagar.as_view(), name='pagar'),
-    path('fechar-pedido/', FecharPedido.as_view(), name='fechar-pedido'),
-    path('list/', Lista.as_view(), name='Lista'),
-    path('detalhe/', Detalhe.as_view(), name='detalhe'),
+    path('pagar/<int:pk>', Pagar.as_view(), name='pagar'),
+    path('salvarpedido/', SalvarPedido.as_view(), name='salvarpedido'),
+    path('lista/', Lista.as_view(), name='lista'),
+    path('detalhe/<int:pk>', Detalhe.as_view(), name='detalhe'),
 
 ]
