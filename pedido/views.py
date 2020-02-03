@@ -1,12 +1,14 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, reverse
-from django.views.generic import ListView,DetailView
+from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from django.views import View
 from produto.models import Variacao
-from .models import Pedido , itemPedido
+from .models import Pedido, itemPedido
 
 from utils import utils
+
+
 # Create your views here.
 
 class DispatchLoginRequiredMixin(View):
@@ -21,23 +23,18 @@ class DispatchLoginRequiredMixin(View):
         qs = qs.filter(usuario=self.request.user)
         return qs
 
-class Pagar(DetailView):
-  template_name = 'pedido/pagar.html'
-  model = Pedido
-  pk_url_kwarg = 'pk'
-  context_object_name = 'pedido'
 
-  def get_queryset(self,*args, **kwargs):
-      qs = super().get_queryset(*args, **kwargs)
-      qs = qs.filter(usuario=self.request.user)
-      return qs
+class Pagar(DispatchLoginRequiredMixin, DetailView):
+    template_name = 'pedido/pagar.html'
+    model = Pedido
+    pk_url_kwarg = 'pk'
+    context_object_name = 'pedido'
 
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        qs = qs.filter(usuario=self.request.user)
+        return qs
 
-
-
-class Lista(View):
-    def get(self, *args, **kwargs):
-        return HttpResponse('Pedito')
 
 class SalvarPedido(View):
     template_name = 'pedido/pagar.html'
@@ -131,15 +128,22 @@ class SalvarPedido(View):
             reverse(
                 'pedido:pagar',
                 kwargs={
-                    'pk':pedido.pk
+                    'pk': pedido.pk
                 }
             )
         )
 
 
-class Detalhe(View):
-    def get(self, *args, **kwargs):
-        return HttpResponse('Detalhe')
+class Lista(DispatchLoginRequiredMixin, ListView):
+    model = Pedido
+    context_object_name = 'pedidos'
+    template_name = 'pedido/lista.html'
+    paginate_by = 10
+    ordering = ['-id']
 
 
-
+class Detalhe(DispatchLoginRequiredMixin, DetailView):
+    model = Pedido
+    context_object_name = 'pedido'
+    template_name = 'pedido/detalhe.html'
+    pk_url_kwarg = 'pk'
