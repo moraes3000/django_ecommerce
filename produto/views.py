@@ -6,6 +6,7 @@ from django.views import View
 from . import models
 from django.contrib import messages
 from perfil.models import Perfil
+from django.db.models import Q
 
 from pprint import pprint  # para teste
 
@@ -189,3 +190,23 @@ class ResumoDaCompra(View):
         }
 
         return render(self.request, 'produto/resumodacompra.html', contexto)
+
+
+class Busca(ListaProdutos):
+    def get_queryset(self, *args, **kwargs):
+        termo = self.request.GET.get('termo') or self.request.session['termo']
+        qs = super().get_queryset(*args, **kwargs)
+
+        if not termo:
+            return qs
+
+        self.request.session['termo'] = termo
+
+        qs = qs.filter(
+            Q(nome__icontains=termo) |
+            Q(descricao_curta__icontains=termo) |
+            Q(descricao_longa__icontains=termo)
+        )
+
+        self.request.session.save()
+        return qs
